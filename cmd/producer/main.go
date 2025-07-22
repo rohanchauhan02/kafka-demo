@@ -1,0 +1,85 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"kafka-demo/internal/kafka"
+	"kafka-demo/internal/types"
+	"log"
+	"math/rand"
+	"os"
+	"os/signal"
+	"sync"
+	"time"
+
+	"github.com/IBM/sarama"
+)
+
+func main() {
+	config := kafka.NewProducerConfig()
+	producer, err := sarama.NewAsyncProducer(kafka.GetBrokers(), config)
+	if err != nil {
+		log.Fatalf("Error creating producer: %v", err)
+	}
+	defer producer.Close()
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		for msg := range producer.Successes() {
+			log.Printf("Produced to %s[%d]", msg.Topic, msg.Partition)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for err := range producer.Errors() {
+			log.Printf("Producer error: %v", err)
+		}
+	}()
+
+	eventTypes := map[string][]string{
+		"orders":        {"order_created", "order_updated", "order_canceled"},
+		"payments":      {"payment_received", "payment_failed", "payment_refunded"},
+		"notifications": {"email_sent", "sms_sent", "push_notification"},
+	}
+
+ProducerLoop:
+	for {
+		topic := kafka.GetTopics()[rand.Intn(3)]
+		eventType := eventTypes[topic][rand.Intn(3)]
+		eventID := fmt.Sprintf("evt-%d", time.Now().UnixNano())
+
+		event := types.Event{
+			Type:      eventType,
+			ID:        eventID,
+			Data:      fmt.Sprintf("data-%d", rand.Intn(1000)),
+			Timestamp: time.Now(),
+		}
+
+		jsonEvent, _ := json.Marshal(event)
+		msg := &sarama.ProducerMessage{
+			Topic: topic,
+			Key:   sarama.StringEncoder(eventID),
+			Value: sarama.ByteEncoder(jsonEvent),
+		}
+
+		select {
+		case producer.Input() <- msg:
+			log.Printf("Sent %s to %s", event.Type, topic)
+		case <-signals:
+			producer.AsyncClose()
+			break ProducerLoop
+		}
+
+		time.Sleep(time.Duration(500+rand.Intn(1000)) * time.Millisecond)
+	}
+
+	wg.Wait()
+	log.Println("Producer shutdown complete")
+}
