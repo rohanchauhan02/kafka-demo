@@ -1,6 +1,6 @@
 # Kafka Multi-Topic Multi-Consumer System (Go + Sarama)
 
-A **production-ready Kafka architecture** built in **Go**, demonstrating a real-world multi-topic, multi-consumer group setup using the [Sarama](https://github.com/Shopify/sarama) Kafka client.
+A **production-ready Kafka architecture** built in **Go**, demonstrating a real-world multi-topic, multi-consumer group setup using the [Sarama](https://github.com/IBM/sarama) Kafka client.
 
 ---
 
@@ -256,7 +256,7 @@ docker-compose down -v     # Stop + remove volumes
 Built by engineers for engineers using:
 
 - [Apache Kafka](https://kafka.apache.org/)
-- [Sarama](https://github.com/Shopify/sarama)
+- [Sarama](https://github.com/IBM/sarama)
 - Go Modules + Docker
 
 ---
