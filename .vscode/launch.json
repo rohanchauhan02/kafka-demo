@@ -2,24 +2,32 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Server",
+      "name": "Launch producer",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/server/server.go"
+      "program": "${workspaceFolder}/cmd/producer/main.go"
     },
     {
-      "name": "Launch Client",
+      "name": "Launch consumer1",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/client/client.go"
+      "program": "${workspaceFolder}/cmd/consumer-group1/main.go"
+    },
+    {
+      "name": "Launch consumer2",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/consumer-group2/main.go"
     }
   ],
   "compounds": [
     {
       "name": "Run Client and Server",
-      "configurations": ["Launch Server", "Launch Client"]
+      "configurations": ["Launch producer", "Launch consumer1", "Launch consumer2"],
+      "stopAll": true
     }
   ]
 }
